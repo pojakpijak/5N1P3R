@@ -13,18 +13,25 @@ Proces jest w pełni zautomatyzowany przez test_runner, który zarządza całym 
 # Faza 1: Przygotowanie Środowiska Testowego
 
 1.1. Wymagania Wstępne
+
 Przed rozpoczęciem upewnij się, że w Twoim środowisku systemowym ($PATH) dostępne są następujące narzędzia:
 Rust Toolchain: Niezbędny do kompilacji bota i symulatora (cargo).
 Solana CLI: Wymagany jest solana-test-validator do uruchomienia lokalnego klastra.
 
 1.2. Struktura Projektu
+
 Operujemy wewnątrz tego repozytorium. Kluczowe komponenty znajdują się w katalogu main/bot/src:
-main.rs: Główny plik binarny bota.
-src/bin/test_runner.rs: Nasze centrum dowodzenia testami.
-src/bin/market_simulator.rs: Aplikacja symulująca rynek (TokenGenerator + MarketMaker).
-test_config.toml: Plik konfiguracyjny dla test_runnera.
+
+- main.rs: Główny plik binarny bota.
+
+- src/bin/test_runner.rs: Nasze centrum dowodzenia testami.
+
+- src/bin/market_simulator.rs: Aplikacja symulująca rynek (TokenGenerator + MarketMaker).
+
+- test_config.toml: Plik konfiguracyjny dla test_runnera.
 
 1.3. Konfiguracja Scenariuszy
+
 Testowym, centralnym punktem konfiguracji jest plik: main/bot/test_config.toml. Definiuje on i ustawia przebieg całego testu.
 
 Wymagania:
@@ -39,7 +46,8 @@ solana_test_validator_path = "solana-test-validator"
 market_simulator_crate_path = "."  # Symulator jest w tym samym crate co runner
 sniper_bot_crate_path = "."        # Bot również
 
-Definicja poszczególnych scenariuszy testowych
+Definicja poszczególnych scenariuszy testowych:
+
 [[scenarios]]
 name = "Standard Market Conditions"
 duration_secs = 120
@@ -54,9 +62,11 @@ Przed uruchomieniem testów, zweryfikuj poprawność ścieżek i dostosuj parame
 
 
 # Faza 2: Uruchomienie Procedury Testowej
+
 Procedura jest w pełni zautomatyzowana. Wszystkie kroki są wykonywane przez test_runner.
 
 2.1. Uruchomienie Test Runnera
+
 Otwórz terminal w głównym katalogu bota (main/bot/) i wykonaj następujące polecenie:
 
 cargo run --release --bin test_runner
@@ -68,21 +78,23 @@ cargo run --release --bin test_runner -- --scenarios ./path/to/my_scenarios.toml
 
 2.2. Przebieg Zautomatyzowanego Testu
 
-Test Runner wykona następującą sekwencję operacji dla każdego scenariusza zdefiniowanego w pliku konfiguracyjnym:
-Kompilacja Binarek: test_runner najpierw skompiluje market_simulator i sniffer_bot_light w trybie --release. Gwarantuje to, że testujemy zoptymalizowany, produkcyjny kod.
+Test Runner wykona następującą sekwencję 6 operacji, dla każdego scenariusza zdefiniowanego w pliku konfiguracyjnym:
 
-Uruchomienie Walidatora: W tle zostanie uruchomiony solana-test-validator z flagą --reset, zapewniając czyste, odizolowane środowisko dla każdego testu.
+1. Kompilacja Binarek: test_runner najpierw skompiluje market_simulator i sniffer_bot_light w trybie --release. Gwarantuje to, że testujemy zoptymalizowany, produkcyjny kod.
 
-Uruchomienie Symulatora i Bota: market_simulator i sniffer_bot_light zostaną uruchomione jako osobne procesy, które natychmiast połączą się z lokalnym walidatorem.
+2. Uruchomienie Walidatora: W tle zostanie uruchomiony solana-test-validator z flagą --reset, zapewniając czyste, odizolowane środowisko dla każdego testu.
 
-Streaming Logów: stdout (w formacie JSON) i stderr obu procesów są na bieżąco zapisywane do dedykowanych plików w katalogu projektu (np. simulator_standard_market_conditions.stdout.jsonl), co zapobiega utracie danych i nadmiernemu zużyciu pamięci.
+3. Uruchomienie Symulatora i Bota: market_simulator i sniffer_bot_light zostaną uruchomione jako osobne procesy, które natychmiast połączą się z lokalnym walidatorem.
 
-Przebieg Scenariusza: System działa przez zdefiniowany w scenariuszu czas (duration_secs). W tym czasie MarketSimulator generuje tokeny i aktywność rynkową, a SNIPER na nią reaguje.
+4. Streaming Logów: stdout (w formacie JSON) i stderr obu procesów są na bieżąco zapisywane do dedykowanych plików w katalogu projektu (np. simulator_standard_market_conditions.stdout.jsonl), co zapobiega utracie danych i nadmiernemu zużyciu pamięci.
 
-Zakończenie i Sprzątanie: Po upływie czasu, test_runner bezpiecznie zakończy wszystkie procesy (simulator, bot, validator).
+5. Przebieg Scenariusza: System działa przez zdefiniowany w scenariuszu czas (duration_secs). W tym czasie MarketSimulator generuje tokeny i aktywność rynkową, a SNIPER na nią reaguje.
+
+6. Zakończenie i Sprzątanie: Po upływie czasu, test_runner bezpiecznie zakończy wszystkie procesy (simulator, bot, validator).
 
 
 # Faza 3: Analiza Wyników
+
 Po zakończeniu wszystkich scenariuszy, test_runner automatycznie przetwarza zebrane logi i generuje finalny raport.
 
 3.1. Raport w Konsoli

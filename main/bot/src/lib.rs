@@ -18,6 +18,7 @@ pub mod modes;
 pub mod observability;
 pub mod test_environment;
 pub mod market_maker;
+pub mod token_generator;
 
 
 

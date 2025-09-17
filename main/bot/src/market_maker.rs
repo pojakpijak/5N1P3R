@@ -129,6 +129,11 @@ impl MarketMaker {
         info!("📈 Added token {} with profile {:?} to MarketMaker, starting in Hype phase.", token.mint, token.profile);
     }
 
+    /// Get the number of tokens currently being managed
+    pub async fn get_token_count(&self) -> usize {
+        self.live_tokens.read().await.len()
+    }
+
     /// Start the MarketMaker main loop
     pub async fn start(&self) -> Result<()> {
         *self.is_running.write().await = true;
@@ -239,7 +244,7 @@ impl MarketMaker {
     // Simplified handlers for Rug and Trash
     async fn handle_rug_token(&self, token_state: &mut TokenState) -> Result<()> {
          let (min, max) = (self.config.rug_min_sleep_mins, self.config.rug_max_sleep_mins);
-         let sleep_duration = Duration::from_mins(fastrand::u64(min..=max));
+         let sleep_duration = Duration::from_secs(fastrand::u64(min..=max) * 60);
          if token_state.created_at.elapsed() >= sleep_duration {
              warn!("💀 Executing RUG PULL for token {}!", token_state.mint);
              token_state.is_active = false;

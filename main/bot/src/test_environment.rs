@@ -14,6 +14,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use anyhow::{anyhow, Context, Result};
+use chrono;
 use solana_client::rpc_client::RpcClient;
 use solana_sdk::{
     commitment_config::CommitmentConfig,
@@ -408,8 +409,10 @@ impl TestEnvironment {
         let market_maker_config = config.unwrap_or_else(|| MarketMakerConfig {
             loop_interval_ms: 500, // Faster for testing
             trader_wallet_count: 5, // Fewer wallets for testing
-            gem_min_duration_mins: 1,
-            gem_max_duration_mins: 2,
+            hype_phase_duration_secs: (10, 30),
+            consolidation_phase_duration_secs: (30, 90),
+            selloff_phase_duration_secs: (10, 20),
+            hype_phase_tx_interval_ms: (50, 200),
             rug_min_sleep_mins: 1,
             rug_max_sleep_mins: 2,
             trash_transaction_count: 2,
@@ -428,8 +431,22 @@ impl TestEnvironment {
         let market_maker = self.market_maker.as_ref()
             .ok_or_else(|| anyhow!("MarketMaker not initialized"))?;
         
-        market_maker.add_token(mint, profile).await
-            .context("Failed to add token to MarketMaker")?;
+        // Create a mock GeneratedToken for the add_token method
+        let generated_token = crate::token_generator::GeneratedToken {
+            mint,
+            profile: match profile {
+                crate::types::TokenProfile::Gem => crate::token_generator::TokenProfile::Gem,
+                crate::types::TokenProfile::RugPull => crate::token_generator::TokenProfile::Rug,
+                crate::types::TokenProfile::Trash => crate::token_generator::TokenProfile::Trash,
+            },
+            creator: Keypair::new().pubkey(), // Mock creator
+            created_at: chrono::Utc::now().timestamp() as u64,
+            initial_supply: 1_000_000,
+            liquidity_lamports: 1_000_000, // Mock liquidity
+            metadata_uri: None, // No metadata for tests
+        };
+        
+        market_maker.add_token(&generated_token).await;
         
         info!("📈 Added test token {} with profile {:?}", mint, profile);
         Ok(())

@@ -38,38 +38,8 @@ use tracing::{debug, error, info, warn};
 // These would be imported from the bot crate in a real workspace setup
 use crate::rpc_manager::RpcBroadcaster;
 use crate::wallet::WalletManager;
+use sniffer_bot_light::token_generator::{TokenProfile, GeneratedToken};
 
-
-/// Token profile types with associated probabilities
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum TokenProfile {
-    /// High-quality token with real metadata and significant liquidity (1% probability)
-    Gem,
-    /// Rug pull token with minimal liquidity, may disappear quickly (9% probability)
-    Rug,
-    /// Low-quality trash token with poor metadata (90% probability)
-    Trash,
-}
-
-impl TokenProfile {
-    /// Get the probability weight for this profile
-    pub fn weight(&self) -> u32 {
-        match self {
-            TokenProfile::Gem => 1,
-            TokenProfile::Rug => 9,
-            TokenProfile::Trash => 90,
-        }
-    }
-
-    /// Get a description of this profile
-    pub fn description(&self) -> &'static str {
-        match self {
-            TokenProfile::Gem => "Gem - High quality token with real metadata and high liquidity",
-            TokenProfile::Rug => "Rug - Rug pull token with minimal liquidity",
-            TokenProfile::Trash => "Trash - Low quality token with poor metadata",
-        }
-    }
-}
 
 /// Configuration for the token generator
 #[derive(Debug, Clone)]
@@ -78,25 +48,6 @@ pub struct SimulatorConfig {
     pub interval_min: Duration,
     /// Maximum interval between token generations
     pub interval_max: Duration,
-}
-
-/// Information about a generated token
-#[derive(Debug, Clone)]
-pub struct GeneratedToken {
-    /// The mint pubkey of the generated token
-    pub mint: Pubkey,
-    /// The profile type of this token
-    pub profile: TokenProfile,
-    /// The creator wallet pubkey
-    pub creator: Pubkey,
-    /// Timestamp when this token was created
-    pub created_at: u64,
-    /// Initial supply that was minted
-    pub initial_supply: u64,
-    /// Amount of liquidity added (in lamports)
-    pub liquidity_lamports: u64,
-    /// Metadata URI (if any)
-    pub metadata_uri: Option<String>,
 }
 
 /// Thread-safe storage for generated tokens

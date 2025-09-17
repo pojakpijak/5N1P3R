@@ -68,7 +68,7 @@ impl WalletManager {
                 return Err(anyhow!("Invalid keypair: expected 64 bytes, got {}", bytes.len()));
             }
 
-            let keypair = Keypair::from_bytes(&bytes)
+            let keypair = Keypair::try_from(&bytes[..])
                 .map_err(|e| anyhow!("Failed to create keypair from bytes: {}", e))?;
                 
             return Ok(keypair);
@@ -77,7 +77,7 @@ impl WalletManager {
         // Try base58 format
         if let Ok(bytes) = bs58::decode(data).into_vec() {
             if bytes.len() == 64 {
-                if let Ok(keypair) = Keypair::from_bytes(&bytes) {
+                if let Ok(keypair) = Keypair::try_from(&bytes[..]) {
                     return Ok(keypair);
                 }
             }

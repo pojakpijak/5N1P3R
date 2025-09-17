@@ -44,6 +44,7 @@ use tokio_retry::{
     Retry,
 };
 use tracing::{debug, info, warn};
+use base64::{Engine as _, engine::general_purpose};
 
 use crate::nonce_manager::NonceManager;
 use crate::types::PremintCandidate;
@@ -788,7 +789,7 @@ impl TransactionBuilder {
                     }
                 })?;
 
-                let data = base64::decode(data_b64).map_err(|e| {
+                let data = general_purpose::STANDARD.decode(data_b64).map_err(|e| {
                     TransactionBuilderError::InstructionBuild {
                         program: api_name.to_string(),
                         reason: format!("base64 decode error: {}", e),
@@ -819,7 +820,7 @@ impl TransactionBuilder {
                     "{} returned legacy instruction_b64 format - consider updating API",
                     api_name
                 );
-                let data = base64::decode(b64).map_err(|e| {
+                let data = general_purpose::STANDARD.decode(b64).map_err(|e| {
                     TransactionBuilderError::InstructionBuild {
                         program: api_name.to_string(),
                         reason: format!("base64 decode error: {}", e),

@@ -1,0 +1,38 @@
+# Example configuration for Solana Sniffer Bot
+# Copy to config.toml and customize for your setup
+
+sniffer_mode = "mock"  # Use "mock" for testing, "real" for production
+
+# Solana RPC Configuration
+rpc_endpoints = ["https://api.mainnet-beta.solana.com"]
+rpc_wss_endpoints = ["wss://api.mainnet-beta.solana.com"]
+
+# RPC Broadcasting Configuration
+broadcast_mode = "pairwise"  # Options: pairwise, replicate, round_robin, full_fanout
+rpc_timeout_sec = 8         # Timeout per RPC call in seconds
+early_cancel_threshold = 2  # Cancel remaining tasks after N fatal errors
+
+# Wallet Configuration (Required for real mode)
+# Uncomment and set the path to your Solana keypair JSON file
+# keypair_path = "/path/to/your/solana-keypair.json"
+
+# WSS watchdog + reconnect
+wss_required = false
+wss_heartbeat_ms = 1500
+wss_reconnect_backoff_ms = 500
+wss_reconnect_backoff_max_ms = 10000
+wss_max_silent_ms = 5000
+
+# HTTP fallback
+http_fallback_enabled = true
+http_poll_interval_ms = 1000
+http_sig_depth = 50
+http_max_parallel_tx_fetch = 6
+
+# Metadata backfill
+meta_fetch_enabled = true
+meta_fetch_commitment = "confirmed"
+
+# Engine/GUI
+nonce_count = 5
+gui_update_interval_ms = 200

@@ -36,8 +36,8 @@ use tokio::time;
 use tracing::{debug, error, info, warn};
 
 // These would be imported from the bot crate in a real workspace setup
-use crate::rpc_manager::RpcBroadcaster;
-use crate::wallet::WalletManager;
+use sniffer_bot_light::rpc_manager::RpcBroadcaster;
+use sniffer_bot_light::wallet::WalletManager;
 use sniffer_bot_light::token_generator::{TokenProfile, GeneratedToken};
 
 
@@ -444,5 +444,11 @@ impl TokenGenerator {
         }
         Ok(())
     }
+}
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    println!("TokenGenerator binary - This is a library module, use the market_simulator instead");
+    Ok(())
 }
 

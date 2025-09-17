@@ -10,11 +10,14 @@ trading scenarios for bot testing.
 use std::sync::Arc;
 use std::time::Duration;
 use anyhow::{Context, Result};
+use chrono;
 use tokio::time::sleep;
 use tracing::{info, warn, error};
 use sniffer_bot_light::market_maker::{MarketMaker, MarketMakerConfig};
 use sniffer_bot_light::test_environment::{TestEnvironment, TestValidatorConfig};
 use sniffer_bot_light::types::TokenProfile;
+use sniffer_bot_light::token_generator::{TokenProfile as GenTokenProfile, GeneratedToken};
+use solana_sdk::signature::{Keypair, Signer};
 
 /// Configuration for market simulation
 #[derive(Debug, Clone)]
@@ -37,8 +40,10 @@ impl Default for SimulationConfig {
             market_maker: MarketMakerConfig {
                 loop_interval_ms: 1000,
                 trader_wallet_count: 8,
-                gem_min_duration_mins: 1,
-                gem_max_duration_mins: 3,
+                hype_phase_duration_secs: (10, 30),
+                consolidation_phase_duration_secs: (30, 90),
+                selloff_phase_duration_secs: (10, 20),
+                hype_phase_tx_interval_ms: (50, 200),
                 rug_min_sleep_mins: 1,
                 rug_max_sleep_mins: 2,
                 trash_transaction_count: 3,
@@ -102,21 +107,48 @@ impl MarketSimulator {
         // Add gem tokens
         for i in 0..gem_count {
             let mint = solana_sdk::pubkey::Pubkey::new_unique();
-            market_maker.add_token(mint, TokenProfile::Gem).await?;
+            let generated_token = GeneratedToken {
+                mint,
+                profile: GenTokenProfile::Gem,
+                creator: Keypair::new().pubkey(),
+                created_at: chrono::Utc::now().timestamp() as u64,
+                initial_supply: 1_000_000,
+                liquidity_lamports: 2_000_000, // Higher liquidity for gems
+                metadata_uri: Some("https://example.com/metadata.json".to_string()),
+            };
+            market_maker.add_token(&generated_token).await;
             info!("💎 Added Gem token {}/{}: {}", i + 1, gem_count, mint);
         }
 
         // Add rug pull tokens
         for i in 0..rug_count {
             let mint = solana_sdk::pubkey::Pubkey::new_unique();
-            market_maker.add_token(mint, TokenProfile::RugPull).await?;
+            let generated_token = GeneratedToken {
+                mint,
+                profile: GenTokenProfile::Rug,
+                creator: Keypair::new().pubkey(),
+                created_at: chrono::Utc::now().timestamp() as u64,
+                initial_supply: 1_000_000,
+                liquidity_lamports: 1_000_000,
+                metadata_uri: None,
+            };
+            market_maker.add_token(&generated_token).await;
             info!("💀 Added RugPull token {}/{}: {}", i + 1, rug_count, mint);
         }
 
         // Add trash tokens
         for i in 0..trash_count {
             let mint = solana_sdk::pubkey::Pubkey::new_unique();
-            market_maker.add_token(mint, TokenProfile::Trash).await?;
+            let generated_token = GeneratedToken {
+                mint,
+                profile: GenTokenProfile::Trash,
+                creator: Keypair::new().pubkey(),
+                created_at: chrono::Utc::now().timestamp() as u64,
+                initial_supply: 1_000_000,
+                liquidity_lamports: 500_000,
+                metadata_uri: None,
+            };
+            market_maker.add_token(&generated_token).await;
             info!("🗑️ Added Trash token {}/{}: {}", i + 1, trash_count, mint);
         }
 
@@ -332,8 +364,10 @@ async fn main() -> Result<()> {
         market_maker: MarketMakerConfig {
             loop_interval_ms: cli_config.loop_interval_ms,
             trader_wallet_count: cli_config.trader_wallets,
-            gem_min_duration_mins: 1,
-            gem_max_duration_mins: 3,
+            hype_phase_duration_secs: (10, 30),
+            consolidation_phase_duration_secs: (30, 90),
+            selloff_phase_duration_secs: (10, 20),
+            hype_phase_tx_interval_ms: (50, 200),
             rug_min_sleep_mins: 1,
             rug_max_sleep_mins: 2,
             trash_transaction_count: 3,

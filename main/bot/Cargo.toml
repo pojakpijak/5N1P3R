@@ -12,12 +12,10 @@ name = "test_runner"
 path = "src/bin/test_runner.rs"
 
 [[bin]]
-
 name = "token_generator"
 path = "src/bin/token_generator.rs"
 
 [[bin]]
-
 name = "market_simulator"
 path = "src/bin/market_simulator.rs"
 
@@ -55,6 +53,7 @@ nonempty = { version = "0.10", features = ["serialize"] }
 tokio-retry = "0.3"
 log = "0.4"
 scopeguard = "1.2"
+clap = { version = "4.0", features = ["derive"] }
 
 # Solana + SPL
 solana-client = "2.3"

@@ -1,8 +1,8 @@
-# 5N1P3R
-The Solana Sniper - Basic version
+
+# The Solana Sniper "5N1P3R" - Basic version
 
 
-Wprowadzenie do Testów w Środowisku Symulowanym MarketSimulator®.
+# Wprowadzenie do Testów w Środowisku Symulowanym MarketSimulator®.
 
 
 Poniższa część dokumentacji definiuje procedurę uruchamiania i analizy testów dla bota 5N1P3R basic, przy użyciu zintegrowanego środowiska MarketSimulator®. Celem jest weryfikacja wydajności, stabilności i logiki biznesowej bota w kontrolowanych, powtarzalnych warunkach, które naśladują dynamikę sieci Solana.
@@ -10,7 +10,7 @@ Poniższa część dokumentacji definiuje procedurę uruchamiania i analizy test
 Proces jest w pełni zautomatyzowany przez test_runner, który zarządza całym cyklem życia testu – od budowy komponentów, przez uruchomienie symulacji, aż po agregację wyników i generowanie raportu.
 
 
-Faza 1: Przygotowanie Środowiska Testowego
+# Faza 1: Przygotowanie Środowiska Testowego
 
 1.1. Wymagania Wstępne
 Przed rozpoczęciem upewnij się, że w Twoim środowisku systemowym ($PATH) dostępne są następujące narzędzia:
@@ -34,25 +34,26 @@ Przykład konfiguracji:
 
 solana_test_validator_path = "solana-test-validator"
 
-# Ścieżki do crate'ów, które test_runner ma skompilować.
+Ścieżki do crate'ów, które test_runner ma skompilować.
+
 market_simulator_crate_path = "."  # Symulator jest w tym samym crate co runner
 sniper_bot_crate_path = "."        # Bot również
 
-# Definicja poszczególnych scenariuszy testowych
+Definicja poszczególnych scenariuszy testowych
 [[scenarios]]
 name = "Standard Market Conditions"
 duration_secs = 120
-# ... inne parametry specyficzne dla scenariusza
+ ... inne parametry specyficzne dla scenariusza
 
 [[scenarios]]
 name = "High-Velocity Gem Rush (Stress Test)"
 duration_secs = 60
-# ... inne parametry specyficzne dla scenariusza.
+ ... inne parametry specyficzne dla scenariusza.
 
 Przed uruchomieniem testów, zweryfikuj poprawność ścieżek i dostosuj parametry scenariuszy (np. duration_secs) do swoich potrzeb.
 
 
-Faza 2: Uruchomienie Procedury Testowej
+# Faza 2: Uruchomienie Procedury Testowej
 Procedura jest w pełni zautomatyzowana. Wszystkie kroki są wykonywane przez test_runner.
 
 2.1. Uruchomienie Test Runnera
@@ -81,7 +82,7 @@ Przebieg Scenariusza: System działa przez zdefiniowany w scenariuszu czas (dura
 Zakończenie i Sprzątanie: Po upływie czasu, test_runner bezpiecznie zakończy wszystkie procesy (simulator, bot, validator).
 
 
-Faza 3: Analiza Wyników
+# Faza 3: Analiza Wyników
 Po zakończeniu wszystkich scenariuszy, test_runner automatycznie przetwarza zebrane logi i generuje finalny raport.
 
 3.1. Raport w Konsoli

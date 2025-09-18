@@ -26,7 +26,7 @@ use crate::nonce_manager::NonceManager;
 
 use crate::rpc_manager::RpcBroadcaster;
 use crate::security::validator;
-use crate::structured_logging::{PipelineContext, StructuredLogger};
+use crate::structured_logging::PipelineContext;
 use crate::observability::CorrelationId;
 use crate::tx_builder::{TransactionBuilder, TransactionConfig};
 use crate::types::{AppState, CandidateReceiver, Mode, PremintCandidate};

@@ -10,7 +10,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use fastrand;
 use solana_sdk::pubkey::Pubkey;
 use tokio::time::interval;

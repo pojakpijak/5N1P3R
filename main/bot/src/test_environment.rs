@@ -19,18 +19,18 @@ use solana_client::rpc_client::RpcClient;
 use solana_sdk::{
     commitment_config::CommitmentConfig,
     pubkey::Pubkey,
-    signature::{Keypair, Signature, Signer},
+    signature::{Keypair, Signer},
     system_instruction,
     transaction::Transaction,
 };
 use tempfile::TempDir;
 use tokio::time::sleep;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, info, warn};
 
 use crate::config::Config;
 use crate::types::PremintCandidate;
 use crate::rpc_manager::RpcManager;
-use crate::buy_engine::BuyEngine;
+// Removed unused import: use crate::buy_engine::BuyEngine;
 use crate::nonce_manager::NonceManager;
 use crate::market_maker::{MarketMaker, MarketMakerConfig};
 

@@ -15,7 +15,7 @@ use tokio::time::sleep;
 use tracing::{info, warn, error};
 use sniffer_bot_light::market_maker::{MarketMaker, MarketMakerConfig};
 use sniffer_bot_light::test_environment::{TestEnvironment, TestValidatorConfig};
-use sniffer_bot_light::types::TokenProfile;
+// Removed unused import: use sniffer_bot_light::types::TokenProfile;
 use sniffer_bot_light::token_generator::{TokenProfile as GenTokenProfile, GeneratedToken};
 use solana_sdk::signature::{Keypair, Signer};
 

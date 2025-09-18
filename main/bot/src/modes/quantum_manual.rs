@@ -1,7 +1,7 @@
 use std::sync::Arc;
-use tokio::sync::{mpsc, Mutex};
+use tokio::sync::mpsc;
 use anyhow::Result;
-use tracing::{info, warn, error};
+use tracing::{info, warn};
 
 use crate::types::{PremintCandidate, QuantumCandidateGui};
 use crate::quantum_selector::{PredictiveOracle, OracleConfig, ScoredCandidate};

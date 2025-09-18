@@ -25,7 +25,9 @@ mock-mode = []
 # Map features to optional deps (required for cargo to resolve metadata)
 pumpfun = ["dep:pumpfun"]
 # raydium = ["dep:raydium-sdk-V2"]  # Temporarily disabled due to version conflicts
+raydium = []  # Feature flag for raydium-specific code paths
 orca = ["dep:orca_whirlpools"]
+test_utils = []  # Feature flag for test utilities
 # Convenience meta-feature (optional)
 dex-all = ["pumpfun", "orca"]  # Removed raydium from meta-feature
 

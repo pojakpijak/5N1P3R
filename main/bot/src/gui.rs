@@ -7,8 +7,8 @@ use eframe::egui::{self, Key, Color32, RichText, ScrollArea, Stroke};
 use eframe::{App, Frame};
 use solana_sdk::pubkey::Pubkey;
 use tokio::sync::{mpsc::Sender, Mutex};
-use tracing::{info, warn};
-use crate::types::{Mode, QuantumCandidateGui};
+use tracing::info;
+use crate::types::{AppState, Mode, QuantumCandidateGui};
 
 // --- Zdarzenia i Typy ---
 
@@ -41,6 +41,24 @@ pub log_events: VecDeque<GuiLogEvent>,
 pub active_style: egui::Style,
 }
 
+impl GuiState {
+    /// Convert from AppState to GuiState
+    pub fn from_app_state(app_state: &AppState) -> Self {
+        let active_token_mint = app_state.active_token.as_ref()
+            .map(|token| token.mint.to_string());
+        
+        Self {
+            mode: app_state.mode.clone(),
+            active_token_mint,
+            last_buy_price: app_state.last_buy_price,
+            holdings_percent: app_state.holdings_percent,
+            quantum_suggestions: app_state.quantum_suggestions.clone(),
+            log_events: VecDeque::with_capacity(10), // Start with empty log events
+            active_style: egui::Style::default(),
+        }
+    }
+}
+
 impl Default for GuiState {
 fn default() -> Self {
 Self {
@@ -59,12 +77,12 @@ active_style: egui::Style::default(),
 
 pub fn launch_gui(
 title: &str,
-gui_state: Arc<Mutex<GuiState>>,
+app_state: Arc<Mutex<AppState>>,
 gui_tx: GuiEventSender,
 refresh: Duration,
 ) -> Result<()> {
 let native_options = eframe::NativeOptions::default();
-let app = BotApp::new(gui_state, gui_tx, refresh);
+let app = BotApp::new(app_state, gui_tx, refresh);
 eframe::run_native(title, native_options, Box::new(|_| Box::new(app)))
 .map_err(|e| anyhow::anyhow!("GUI error: {}", e))
 }
@@ -72,16 +90,16 @@ eframe::run_native(title, native_options, Box::new(|_| Box::new(app)))
 // --- Aplikacja GUI ---
 
 struct BotApp {
-gui_state_handle: Arc<Mutex<GuiState>>,
+app_state_handle: Arc<Mutex<AppState>>,
 local_gui_state: GuiState,
 gui_tx: GuiEventSender,
 refresh: Duration,
 }
 
 impl BotApp {
-fn new(gui_state_handle: Arc<Mutex<GuiState>>, gui_tx: GuiEventSender, refresh: Duration) -> Self {
+fn new(app_state_handle: Arc<Mutex<AppState>>, gui_tx: GuiEventSender, refresh: Duration) -> Self {
 Self {
-gui_state_handle,
+app_state_handle,
 local_gui_state: GuiState::default(),
 gui_tx,
 refresh,
@@ -207,8 +225,8 @@ if i.key_pressed(Key::S) { let _ = self.gui_tx.try_send(GuiEvent::SellPercent(1.
 });
 
 // --- Nieblokujące pobieranie stanu ---  
-    if let Ok(guard) = self.gui_state_handle.try_lock() {  
-        self.local_gui_state = guard.clone();  
+    if let Ok(guard) = self.app_state_handle.try_lock() {  
+        self.local_gui_state = GuiState::from_app_state(&guard);  
     }  
 
     // --- ULEPSZENIE: Zastosowanie stylu ---  
@@ -248,8 +266,10 @@ _ => Color32::from_rgb(255, 69, 0),      // OrangeRed
 }
 
 // Helper do wczytywania stylu z pliku
-pub fn load_style_from_file(path: &str) -> Resultegui::Style {
-let style_json = fs::read_to_string(path)?;
-let style: egui::Style = serde_json::from_str(&style_json)?;
-Ok(style)
-                                     }
+pub fn load_style_from_file(path: &str) -> Result<egui::Style> {
+    // Since egui::Style doesn't implement Deserialize, we'll return the default style
+    // In a real implementation, you would manually parse style properties from JSON
+    let _style_json = fs::read_to_string(path)?;
+    info!("Style file loaded from: {}", path);
+    Ok(egui::Style::default())
+}

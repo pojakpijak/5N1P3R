@@ -145,6 +145,10 @@ async fn main() -> anyhow::Result<()> {
                     info!("GUI requested buy for pubkey: {}", pubkey);
                     // Handle buy event if needed
                 }
+                GuiEvent::ReloadStyle => {
+                    info!("GUI requested style reload");
+                    // Handle style reload if needed
+                }
             }
         }
     });

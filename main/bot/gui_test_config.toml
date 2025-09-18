@@ -1,0 +1,22 @@
+# Simple test configuration for GUI testing
+sniffer_mode = "Mock"
+gui_update_interval_ms = 100
+
+priority_fee_lamports = 10000
+compute_unit_limit = 200000
+buy_amount_lamports = 10000000
+slippage_percent = 10.0
+
+rpc_endpoints = [
+  "https://api.devnet.solana.com"
+]
+rpc_retry_attempts = 3
+rpc_timeout_ms = 8000
+
+jito_bundle_enabled = false
+nonce_count = 5
+
+# No keypair for testing GUI only
+# keypair_path = ""
+
+allowed_programs = []

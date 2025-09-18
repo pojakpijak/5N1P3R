@@ -325,6 +325,7 @@ impl TestEnvironment {
     }
 
     /// Test transaction broadcasting
+    #[allow(deprecated)]
     async fn test_transaction_broadcast(&self) -> Result<()> {
         let client = self.rpc_client.as_ref()
             .ok_or_else(|| anyhow!("RPC client not initialized"))?;

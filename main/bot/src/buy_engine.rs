@@ -319,7 +319,7 @@ impl BuyEngine {
     }
 
     /// Protected buy operation with atomic guards and proper lease management
-    async fn try_buy_with_guards(&self, candidate: PremintCandidate, correlation_id: CorrelationId) -> Result<Signature> {
+    async fn try_buy_with_guards(&self, candidate: PremintCandidate, _correlation_id: CorrelationId) -> Result<Signature> {
         // Set pending flag atomically
         if self.pending_buy.compare_exchange(false, true, Ordering::Relaxed, Ordering::Relaxed).is_err() {
             return Err(anyhow!("buy operation already in progress"));

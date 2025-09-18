@@ -211,6 +211,7 @@ impl TokenGenerator {
     }
 
     /// Create the packed initialization transaction
+    #[allow(deprecated)]
     async fn create_initialization_transaction(
         &self,
         mint_keypair: &Keypair,

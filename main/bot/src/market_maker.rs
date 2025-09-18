@@ -177,7 +177,7 @@ impl MarketMaker {
     }
 
     /// Process a single token based on its profile
-    async fn process_single_token(&self, mint: Pubkey, mut token_state: TokenState) -> Result<()> {
+    async fn process_single_token(&self, _mint: Pubkey, mut token_state: TokenState) -> Result<()> {
         match token_state.profile {
             TokenProfile::Gem => self.handle_gem_token(&mut token_state).await,
             TokenProfile::Rug => self.handle_rug_token(&mut token_state).await,

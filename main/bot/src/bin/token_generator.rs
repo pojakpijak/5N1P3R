@@ -10,6 +10,7 @@ use std::time::Duration;
 
 use anyhow::Result;
 use fastrand::Rng;
+#[allow(deprecated)]
 use solana_sdk::{
     compute_budget::ComputeBudgetInstruction,
     hash::Hash,

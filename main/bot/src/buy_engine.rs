@@ -52,6 +52,7 @@ impl BackoffState {
         }
     }
 
+    #[allow(dead_code)]
     async fn record_failure(&self) {
         let failures = self.consecutive_failures.fetch_add(1, Ordering::Relaxed) + 1;
         let mut last_failure = self.last_failure.lock().await;
@@ -319,6 +320,7 @@ impl BuyEngine {
     }
 
     /// Protected buy operation with atomic guards and proper lease management
+    #[allow(dead_code)]
     async fn try_buy_with_guards(&self, candidate: PremintCandidate, _correlation_id: CorrelationId) -> Result<Signature> {
         // Set pending flag atomically
         if self.pending_buy.compare_exchange(false, true, Ordering::Relaxed, Ordering::Relaxed).is_err() {

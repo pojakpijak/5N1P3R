@@ -133,12 +133,6 @@ fn default_nonce_count() -> usize {
 fn default_gui_interval() -> u64 {
     200
 }
-fn default_rpc_timeout_secs() -> u64 {
-    8
-}
-fn default_max_retries() -> u32 {
-    3
-}
 
 // WSS defaults
 fn default_wss_required() -> bool {

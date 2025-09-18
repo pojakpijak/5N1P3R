@@ -273,3 +273,81 @@ pub fn load_style_from_file(path: &str) -> Result<egui::Style> {
     info!("Style file loaded from: {}", path);
     Ok(egui::Style::default())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::types::{AppState, Mode, QuantumCandidateGui, PremintCandidate};
+    use solana_sdk::pubkey::Pubkey;
+    use std::collections::HashMap;
+
+    #[test]
+    fn test_gui_state_from_app_state() {
+        // Create a test AppState
+        let test_pubkey = Pubkey::new_unique();
+        let quantum_candidate = QuantumCandidateGui {
+            mint: test_pubkey,
+            score: 85,
+            reason: "High volume".to_string(),
+            feature_scores: HashMap::new(),
+            timestamp: 1640995200,
+        };
+
+        let app_state = AppState {
+            mode: Mode::Sniffing,
+            active_token: None,
+            last_buy_price: Some(1.5),
+            holdings_percent: 0.75,
+            quantum_suggestions: vec![quantum_candidate.clone()],
+        };
+
+        // Convert to GuiState
+        let gui_state = GuiState::from_app_state(&app_state);
+
+        // Verify conversion
+        assert!(matches!(gui_state.mode, Mode::Sniffing));
+        assert_eq!(gui_state.active_token_mint, None);
+        assert_eq!(gui_state.last_buy_price, Some(1.5));
+        assert_eq!(gui_state.holdings_percent, 0.75);
+        assert_eq!(gui_state.quantum_suggestions.len(), 1);
+        assert_eq!(gui_state.quantum_suggestions[0].score, 85);
+        assert_eq!(gui_state.log_events.capacity(), 10);
+    }
+
+    #[test]
+    fn test_gui_state_from_app_state_with_active_token() {
+        let test_pubkey = Pubkey::new_unique();
+        let active_token = PremintCandidate {
+            mint: test_pubkey,
+            creator: Pubkey::new_unique(),
+            program: "pump.fun".to_string(),
+            slot: 123456,
+            timestamp: 1640995200,
+            instruction_summary: Some("Create token".to_string()),
+            is_jito_bundle: Some(false),
+        };
+
+        let app_state = AppState {
+            mode: Mode::PassiveToken(test_pubkey),
+            active_token: Some(active_token),
+            last_buy_price: Some(2.0),
+            holdings_percent: 0.5,
+            quantum_suggestions: vec![],
+        };
+
+        let gui_state = GuiState::from_app_state(&app_state);
+
+        assert!(matches!(gui_state.mode, Mode::PassiveToken(_)));
+        assert_eq!(gui_state.active_token_mint, Some(test_pubkey.to_string()));
+        assert_eq!(gui_state.holdings_percent, 0.5);
+    }
+
+    #[test]
+    fn test_load_style_from_file_returns_default() {
+        // Test the load_style_from_file function
+        let result = load_style_from_file("nonexistent.json");
+        
+        // Should return error for non-existent file
+        assert!(result.is_err());
+    }
+}

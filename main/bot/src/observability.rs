@@ -1,7 +1,7 @@
 //! Basic observability infrastructure for SNIPER bot
 //! Provides correlation IDs, structured logging, and basic metrics collection
 
-use serde_json::{json, Value};
+use serde_json::json;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tracing::{info, warn};

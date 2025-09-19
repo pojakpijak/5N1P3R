@@ -25,7 +25,7 @@ impl OracleFeatureComputer {
 
     /// Compute all features for a given token.
     #[instrument(skip(self, token_data), fields(mint = %candidate.mint))]
-    pub fn compute_all_features(
+    pub async fn compute_all_features(
         &self,
         candidate: &PremintCandidate,
         token_data: &TokenData,
@@ -286,7 +286,7 @@ impl OracleFeatureComputer {
             factors += 1;
         }
 
-        let final_score = if factors > 0 { quality_score } else { 0.0 };
+        let final_score = if factors > 0 { quality_score } else { 0.0_f64 };
 
         debug!("Metadata quality: {}/{} factors -> score {}", factors, 5, final_score);
         Ok(final_score.clamp(0.0, 1.0))

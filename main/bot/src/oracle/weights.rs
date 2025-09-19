@@ -124,6 +124,8 @@ impl AdaptiveWeights {
 
         // Update performance for each feature
         for feature in Feature::all() {
+            let correlation = self.calculate_correlation(feature, historical_scores);
+            
             let performance = self.feature_performance.get_mut(&feature).unwrap();
             
             // Update successful scores
@@ -143,12 +145,16 @@ impl AdaptiveWeights {
             }
 
             // Calculate variance and effectiveness
-            performance.score_variance = self.calculate_variance(&performance.successful_scores);
-            performance.effectiveness = self.calculate_effectiveness(performance);
-            performance.correlation_with_outcome = self.calculate_correlation(feature, historical_scores);
+            let successful_scores = &performance.successful_scores;
+            let variance = Self::calculate_variance_static(successful_scores);
+            let effectiveness = Self::calculate_effectiveness_static(performance);
+            
+            performance.score_variance = variance;
+            performance.effectiveness = effectiveness;
+            performance.correlation_with_outcome = correlation;
 
             debug!("Updated performance for {:?}: effectiveness={:.3}, variance={:.3}, correlation={:.3}",
-                   feature, performance.effectiveness, performance.score_variance, performance.correlation_with_outcome);
+                   feature, effectiveness, variance, correlation);
         }
     }
 
@@ -188,6 +194,11 @@ impl AdaptiveWeights {
 
     /// Calculate variance of a score vector.
     fn calculate_variance(&self, scores: &[f64]) -> f64 {
+        Self::calculate_variance_static(scores)
+    }
+
+    /// Calculate variance of a score vector (static version).
+    fn calculate_variance_static(scores: &[f64]) -> f64 {
         if scores.len() < 2 {
             return 0.0;
         }
@@ -203,6 +214,11 @@ impl AdaptiveWeights {
 
     /// Calculate effectiveness of a feature.
     fn calculate_effectiveness(&self, performance: &FeaturePerformance) -> f64 {
+        Self::calculate_effectiveness_static(performance)
+    }
+
+    /// Calculate effectiveness of a feature (static version).
+    fn calculate_effectiveness_static(performance: &FeaturePerformance) -> f64 {
         let successful_mean = if performance.successful_scores.is_empty() {
             0.5
         } else {
@@ -408,7 +424,7 @@ mod tests {
         let adaptive = AdaptiveWeights::new(base_weights);
         
         let scores = vec![0.8, 0.9, 0.7, 0.85, 0.75];
-        let variance = adaptive.calculate_variance(&scores);
+        let variance = AdaptiveWeights::calculate_variance_static(&scores);
         
         assert!(variance > 0.0);
         assert!(variance < 1.0);
@@ -419,7 +435,7 @@ mod tests {
         let base_weights = create_test_weights();
         let adaptive = AdaptiveWeights::new(base_weights);
         
-        let variance = adaptive.calculate_variance(&[]);
+        let variance = AdaptiveWeights::calculate_variance_static(&[]);
         assert_eq!(variance, 0.0);
     }
 
@@ -432,7 +448,7 @@ mod tests {
         performance.successful_scores = vec![0.8, 0.9, 0.85];
         performance.failed_scores = vec![0.3, 0.2, 0.4];
         
-        let effectiveness = adaptive.calculate_effectiveness(&performance);
+        let effectiveness = AdaptiveWeights::calculate_effectiveness_static(&performance);
         
         // Should be high since successful scores are much higher than failed
         assert!(effectiveness > 0.7);

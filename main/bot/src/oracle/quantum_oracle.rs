@@ -290,7 +290,7 @@ impl PredictiveOracle {
 
     /// Clear the token cache.
     pub async fn clear_cache(&self) {
-        self.token_cache.invalidate_all().await;
+        self.token_cache.invalidate_all();
         info!("Cleared Oracle token cache");
     }
 
@@ -312,7 +312,7 @@ impl PredictiveOracle {
               snapshot.counters.get("oracle_cache_hits_total").unwrap_or(&0));
 
         // Clear cache
-        self.token_cache.invalidate_all().await;
+        self.clear_cache().await;
 
         info!("Oracle shutdown complete");
     }

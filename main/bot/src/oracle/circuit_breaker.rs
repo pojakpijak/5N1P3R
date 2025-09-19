@@ -72,13 +72,17 @@ impl CircuitBreaker {
     /// Record a successful request to an endpoint.
     #[instrument(skip(self), fields(endpoint = %endpoint))]
     pub fn record_success(&mut self, endpoint: &str) {
-        let health = self.endpoint_health
-            .entry(endpoint.to_string())
-            .or_insert_with(EndpointHealth::new);
+        {
+            let health = self.endpoint_health
+                .entry(endpoint.to_string())
+                .or_insert_with(EndpointHealth::new);
 
-        health.record_success();
+            health.record_success();
+        }
+        
         self.update_endpoint_state(endpoint);
         
+        let health = self.endpoint_health.get(endpoint).unwrap();
         debug!("Recorded success for endpoint {}: {} failures, {:.2}% success rate",
                endpoint, health.consecutive_failures, health.success_rate * 100.0);
     }
@@ -86,13 +90,17 @@ impl CircuitBreaker {
     /// Record a failed request to an endpoint.
     #[instrument(skip(self), fields(endpoint = %endpoint))]
     pub fn record_failure(&mut self, endpoint: &str) {
-        let health = self.endpoint_health
-            .entry(endpoint.to_string())
-            .or_insert_with(EndpointHealth::new);
+        {
+            let health = self.endpoint_health
+                .entry(endpoint.to_string())
+                .or_insert_with(EndpointHealth::new);
 
-        health.record_failure();
+            health.record_failure();
+        }
+        
         self.update_endpoint_state(endpoint);
         
+        let health = self.endpoint_health.get(endpoint).unwrap();
         warn!("Recorded failure for endpoint {}: {} consecutive failures, {:.2}% success rate",
               endpoint, health.consecutive_failures, health.success_rate * 100.0);
     }
@@ -100,12 +108,12 @@ impl CircuitBreaker {
     /// Check if an endpoint is available for use.
     #[instrument(skip(self), fields(endpoint = %endpoint))]
     pub fn is_available(&mut self, endpoint: &str) -> bool {
+        // Update state before checking availability
+        self.update_endpoint_state(endpoint);
+
         let health = self.endpoint_health
             .entry(endpoint.to_string())
             .or_insert_with(EndpointHealth::new);
-
-        // Update state before checking availability
-        self.update_endpoint_state(endpoint);
 
         match health.state {
             EndpointState::Healthy => true,
@@ -318,6 +326,8 @@ mod tests {
     #[test]
     fn test_endpoint_initially_healthy() {
         let mut cb = CircuitBreaker::new(3, 60, 50);
+        
+        // First check availability to populate the endpoint entry
         assert!(cb.is_available("test-endpoint"));
         assert_eq!(cb.get_endpoint_state("test-endpoint"), EndpointState::Healthy);
     }

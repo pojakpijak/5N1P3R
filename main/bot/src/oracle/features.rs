@@ -486,13 +486,13 @@ mod tests {
         assert_eq!(scores.get(Feature::HolderDistribution), 0.0);
     }
 
-    #[test]
-    fn test_compute_all_features() {
+    #[tokio::test]
+    async fn test_compute_all_features() {
         let computer = OracleFeatureComputer::new(create_test_config());
         let candidate = create_test_candidate();
         let token_data = create_test_token_data();
         
-        let scores = computer.compute_all_features(&candidate, &token_data).unwrap();
+        let scores = computer.compute_all_features(&candidate, &token_data).await.unwrap();
         
         // Verify all features have been computed
         for feature in Feature::all() {

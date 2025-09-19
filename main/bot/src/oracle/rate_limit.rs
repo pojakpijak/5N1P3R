@@ -68,13 +68,13 @@ impl AdaptiveRateLimiter {
 
     /// Check if a request is allowed (governor interface).
     #[instrument(skip(self))]
-    pub async fn check(&self) -> Result<(), governor::NotUntil<Instant>> {
+    pub async fn check(&self) -> Result<(), governor::NotUntil<governor::clock::QuantaInstant>> {
         self.limiter.check()
     }
 
     /// Check if a request is allowed and consume a permit.
     #[instrument(skip(self))]
-    pub async fn check_and_record_request(&mut self) -> Result<(), governor::NotUntil<Instant>> {
+    pub async fn check_and_record_request(&mut self) -> Result<(), governor::NotUntil<governor::clock::QuantaInstant>> {
         let result = self.limiter.check();
         
         if result.is_ok() {

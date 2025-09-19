@@ -51,6 +51,7 @@ impl WalletManager {
     }
 
     /// Get the keypair (for internal use only)
+    #[allow(dead_code)]
     pub(crate) fn keypair(&self) -> &Keypair {
         &self.keypair
     }

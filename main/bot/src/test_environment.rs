@@ -16,6 +16,7 @@ use std::time::{Duration, Instant};
 use anyhow::{anyhow, Context, Result};
 use chrono;
 use solana_client::rpc_client::RpcClient;
+#[allow(deprecated)]
 use solana_sdk::{
     commitment_config::CommitmentConfig,
     pubkey::Pubkey,

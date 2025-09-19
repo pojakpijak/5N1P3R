@@ -102,11 +102,16 @@ pub struct PredictiveOracle {
 struct OracleScorer {
     scored_sender: mpsc::Sender<ScoredCandidate>,
     gui_suggestions: Arc<Mutex<Option<mpsc::Sender<QuantumCandidateGui>>>>,
+    #[allow(dead_code)]
     rpc_clients: NonEmpty<Arc<RpcClient>>,
+    #[allow(dead_code)]
     http_client: Client,
     config: OracleConfig,
+    #[allow(dead_code)]
     token_cache: Arc<RwLock<HashMap<Pubkey, (Instant, TokenData)>>>,
+    #[allow(dead_code)]
     metrics: Arc<RwLock<OracleMetrics>>,
+    #[allow(dead_code)]
     rate_limiter: Arc<DefaultDirectRateLimiter>,
 }
 

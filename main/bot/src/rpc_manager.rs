@@ -56,6 +56,7 @@ pub fn classify_rpc_error(error: &ClientError) -> RpcErrorType {
 }
 
 /// Endpoint performance metrics for adaptive ranking
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 struct EndpointMetrics {
     success_count: u64,
@@ -64,6 +65,7 @@ struct EndpointMetrics {
     last_success: Option<Instant>,
 }
 
+#[allow(dead_code)]
 impl EndpointMetrics {
     fn new() -> Self {
         Self {

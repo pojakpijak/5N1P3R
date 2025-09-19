@@ -62,6 +62,7 @@ struct NonceManagerInner {
 
 #[derive(Debug)]
 pub struct IndexSlotManager {
+    #[allow(dead_code)]
     capacity: usize,
     sem: Arc<Semaphore>,
     inner: Arc<NonceManagerInner>,

@@ -19,6 +19,10 @@ path = "src/bin/token_generator.rs"
 name = "market_simulator"
 path = "src/bin/market_simulator.rs"
 
+[[bin]]
+name = "test_config"
+path = "src/bin/test_config.rs"
+
 [features]
 default = []
 mock-mode = []

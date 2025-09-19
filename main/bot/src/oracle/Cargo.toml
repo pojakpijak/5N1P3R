@@ -4,10 +4,10 @@
 
 
 [package]
-name = "h-5n1p3r"
+name = "5n1p3r"
 version = "0.1.0"
 edition = "2021"
-default-run = "h-5n1p3r"
+default-run = "5n1p3r"
 
 [dependencies]
 # Async runtime

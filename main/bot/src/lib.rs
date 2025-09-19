@@ -14,6 +14,7 @@ pub mod structured_logging;
 pub mod security;
 pub mod endpoints;
 pub mod quantum_selector;
+pub mod oracle;
 pub mod modes;
 pub mod observability;
 pub mod test_environment;

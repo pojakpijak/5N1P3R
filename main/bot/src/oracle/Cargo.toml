@@ -1,0 +1,61 @@
+
+
+// Plik zawierający wszystkie zależności, potrzebne do integracji i uwzględniania w Cargo.toml bota.
+
+
+[package]
+name = "h-5n1p3r"
+version = "0.1.0"
+edition = "2021"
+default-run = "h-5n1p3r"
+
+[dependencies]
+# Async runtime
+tokio = { version = "1.0", features = ["full"] }
+
+# Database
+sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite", "chrono", "json"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Error handling
+anyhow = "1.0"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = "0.3"
+
+# HTTP client
+reqwest = { version = "0.12", features = ["json"] }
+
+# Time handling
+chrono = { version = "0.4", features = ["serde"] }
+
+# Random number generation for simulation
+rand = "0.8"
+
+# Rate limiting
+governor = "0.10"
+
+# Non-empty collections
+nonempty = "0.12"
+
+# Async caching
+moka = { version = "0.12", features = ["future"] }
+
+# Retry logic
+tokio-retry = "0.3"
+
+[lib]
+name = "h_5n1p3r"
+path = "src/lib.rs"
+
+[[bin]]
+name = "h-5n1p3r"
+path = "src/main.rs"
+
+[[bin]]
+name = "test_optimization"
+path = "src/bin/test_optimization.rs"

@@ -12,7 +12,9 @@ use crate::types::{PremintCandidate, QuantumCandidateGui};
 use anyhow::{anyhow, Result};
 use moka::future::Cache;
 use reqwest::Client;
-use solana_client::nonblocking::rpc_client::RpcClient;
+// Temporarily commented out due to Solana dependency issues
+// TODO: Restore when Solana dependencies are properly configured
+// use solana_client::nonblocking::rpc_client::RpcClient;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::{mpsc, Mutex, Semaphore};

@@ -5,6 +5,7 @@
 
 use crate::oracle::types::{
     ScoredCandidate, OracleConfig, TokenData, FeatureScores, Feature, FeatureWeights,
+    MarketRegime, // Add MarketRegime import for Pillar III
 };
 use crate::oracle::features::OracleFeatureComputer;
 use crate::oracle::data_sources::OracleDataSources;
@@ -64,6 +65,83 @@ impl OracleScorer {
     /// Score a candidate token.
     #[instrument(skip(self), fields(mint = %candidate.mint))]
     pub async fn score_candidate(&self, candidate: &PremintCandidate) -> Result<ScoredCandidate> {
+        // Use default LowActivity regime if no regime is specified
+        self.score_candidate_with_regime(candidate, &MarketRegime::LowActivity).await
+    }
+
+    /// Score a candidate using regime-specific parameters (Pillar III).
+    #[instrument(skip(self, candidate, current_regime), fields(mint = %candidate.mint, regime = ?current_regime))]
+    pub async fn score_candidate_with_regime(
+        &self, 
+        candidate: &PremintCandidate,
+        current_regime: &MarketRegime,
+    ) -> Result<ScoredCandidate> {
+        let start_time = Instant::now();
+        
+        debug!("Starting to score candidate: {} in regime: {:?}", candidate.mint, current_regime);
+
+        // --- PILLAR III: Dynamically load regime-specific parameters ---
+        let regime_params = self.config.regime_parameters.get(current_regime)
+            .unwrap_or_else(|| {
+                warn!("No parameters found for regime {:?}, falling back to LowActivity", current_regime);
+                self.config.regime_parameters.get(&MarketRegime::LowActivity)
+                    .expect("LowActivity regime parameters must exist")
+            });
+
+        // Fetch token data from multiple sources
+        let token_data = self.data_sources
+            .fetch_token_data_with_retries(candidate)
+            .await?;
+
+        // Compute feature scores using regime-specific thresholds
+        let feature_scores = self.feature_computer
+            .compute_all_features_with_thresholds(candidate, &token_data, &regime_params.thresholds)
+            .await
+            .unwrap_or_else(|_| {
+                // Fallback to default method if new method doesn't exist yet
+                self.feature_computer.compute_all_features(candidate, &token_data)
+            })?;
+
+        // Detect anomalies
+        let anomaly_detected = self.anomaly_detector
+            .detect_anomalies(&token_data)
+            .await;
+
+        // Calculate weighted final score using regime-specific weights
+        let predicted_score = self.calculate_predicted_score_with_weights(&feature_scores, &regime_params.weights).await?;
+
+        // Apply anomaly penalty if detected
+        let final_score = if anomaly_detected {
+            debug!("Anomaly detected, applying penalty");
+            (predicted_score as f64 * 0.5) as u8 // 50% penalty for anomalies
+        } else {
+            predicted_score
+        };
+
+        // Generate explanation
+        let reason = self.generate_reason_with_regime(&feature_scores, final_score, anomaly_detected, current_regime);
+
+        // Create scored candidate
+        let scored = ScoredCandidate {
+            base: candidate.clone(),
+            mint: candidate.mint.clone(),
+            predicted_score: final_score,
+            feature_scores: feature_scores.to_hashmap(),
+            reason,
+            calculation_time: start_time.elapsed().as_micros(),
+            anomaly_detected,
+            timestamp: candidate.timestamp,
+        };
+
+        info!("Scored candidate {} with score {} in {}μs using {:?} regime", 
+              candidate.mint, final_score, scored.calculation_time, current_regime);
+
+        Ok(scored)
+    }
+
+    /// Legacy method - kept for backward compatibility.
+    /// New code should use score_candidate_with_regime().
+    pub async fn score_candidate_legacy(&self, candidate: &PremintCandidate) -> Result<ScoredCandidate> {
         let start_time = Instant::now();
         
         debug!("Starting to score candidate: {}", candidate.mint);
@@ -100,7 +178,7 @@ impl OracleScorer {
         // Create scored candidate
         let scored = ScoredCandidate {
             base: candidate.clone(),
-            mint: candidate.mint,
+            mint: candidate.mint.clone(),
             predicted_score: final_score,
             feature_scores: feature_scores.to_hashmap(),
             reason,
@@ -158,6 +236,88 @@ impl OracleScorer {
             Feature::CreatorSellSpeed => weights.creator_sell_speed,
             Feature::MetadataQuality => weights.metadata_quality,
             Feature::SocialActivity => weights.social_activity,
+        }
+    }
+
+    /// Calculate predicted score using specific regime weights (Pillar III).
+    #[instrument(skip(self, feature_scores, regime_weights))]
+    async fn calculate_predicted_score_with_weights(
+        &self, 
+        feature_scores: &FeatureScores, 
+        regime_weights: &FeatureWeights
+    ) -> Result<u8> {
+        let mut weighted_sum = 0.0;
+        let mut total_weight = 0.0;
+
+        // Calculate weighted sum using regime-specific weights
+        for feature in Feature::all() {
+            let score = feature_scores.get(feature);
+            let weight = self.get_feature_weight(regime_weights, feature);
+            
+            weighted_sum += score * weight;
+            total_weight += weight;
+        }
+
+        // Normalize to 0-100 scale
+        let normalized_score = if total_weight > 0.0 {
+            (weighted_sum / total_weight * 100.0).round() as u8
+        } else {
+            50 // Default score if no weights
+        };
+
+        debug!("Calculated regime-weighted score: {}/100 (sum={:.3}, weight={:.3})", 
+               normalized_score, weighted_sum, total_weight);
+
+        Ok(normalized_score.min(100))
+    }
+
+    /// Generate regime-aware explanation for the score (Pillar III).
+    #[instrument(skip(self, feature_scores, current_regime))]
+    fn generate_reason_with_regime(
+        &self,
+        feature_scores: &FeatureScores,
+        score: u8,
+        anomaly_detected: bool,
+        current_regime: &MarketRegime,
+    ) -> String {
+        let mut reasons = Vec::new();
+
+        // Add regime context to explanation
+        let regime_context = match current_regime {
+            MarketRegime::Bullish => "Bull market conditions favor volume and growth metrics",
+            MarketRegime::Bearish => "Bear market conditions prioritize liquidity and risk management",
+            MarketRegime::Choppy => "Volatile market conditions require balanced assessment",
+            MarketRegime::HighCongestion => "Network congestion prioritizes Jito bundle execution",
+            MarketRegime::LowActivity => "Low activity market uses conservative evaluation",
+        };
+        reasons.push(regime_context.to_string());
+
+        // Add feature-specific reasons (reuse existing logic but with regime context)
+        self.add_feature_reasons(&mut reasons, feature_scores);
+
+        if anomaly_detected {
+            reasons.push("Anomaly penalty applied (-50%)".to_string());
+        }
+
+        format!("Score {}/100: {}", score, reasons.join(", "))
+    }
+
+    /// Add feature-specific reasons to the explanation.
+    fn add_feature_reasons(&self, reasons: &mut Vec<String>, feature_scores: &FeatureScores) {
+        if feature_scores.get(Feature::Liquidity) > 0.8 {
+            reasons.push("excellent liquidity".to_string());
+        }
+        if feature_scores.get(Feature::VolumeGrowth) > 0.7 {
+            reasons.push("strong volume growth".to_string());
+        }
+        if feature_scores.get(Feature::HolderGrowth) > 0.7 {
+            reasons.push("healthy holder growth".to_string());
+        }
+        if feature_scores.get(Feature::JitoBundlePresence) > 0.5 {
+            reasons.push("Jito bundle detected".to_string());
+        }
+        if feature_scores.get(Feature::CreatorSellSpeed) < 0.3 {
+            reasons.push("creator holding behavior".to_string());
         }
     }
 
@@ -234,11 +394,10 @@ impl OracleScorer {
     pub async fn send_gui_notification(&self, scored: &ScoredCandidate) {
         if scored.predicted_score >= self.config.notify_threshold {
             let gui_suggestion = QuantumCandidateGui {
-                mint: scored.mint,
+                candidate: scored.base.clone(),
                 score: scored.predicted_score,
                 reason: scored.reason.clone(),
-                feature_scores: scored.feature_scores.clone(),
-                timestamp: scored.timestamp,
+                features: scored.feature_scores.clone(),
             };
 
             if let Some(sender) = self.gui_suggestions.lock().await.as_ref() {
